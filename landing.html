@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIV Resistance Intelligence | AI Clinical Platform</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            /* Palette Defaults: Emerald Theme */
+            --primary: #34d399;
+            --secondary: #38bdf8;
+            --purple: #8b5cf6;
+            --brand-glow: rgba(52, 211, 153, 0.35);
+
+            /* Theme Base: Dark (Default) */
+            --bg: #07111f;
+            --bg2: #091a2d;
+            --glass: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.12);
+            --text: #ffffff;
+            --muted: #b6c4d8;
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            --btn-text: #04150f;
+        }
+
+        [data-theme="light"] {
+            /* Theme Override: Light */
+            --bg: #f8fafc;
+            --bg2: #e2e8f0;
+            --glass: rgba(255, 255, 255, 0.75);
+            --border: rgba(0, 0, 0, 0.08);
+            --text: #0f172a;
+            --muted: #475569;
+            --shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+            --btn-text: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        h1, h2, h3, .logo, .btn-primary span {
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: -0.01em;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background:
+                radial-gradient(circle at 10% 10%, var(--brand-glow), transparent 35%),
+                radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.15), transparent 40%),
+                radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.12), transparent 40%),
+                linear-gradient(135deg, var(--bg), var(--bg2));
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* Floating Glow Spheres */
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: 0;
+            pointer-events: none;
+        }
+        body::before {
+            width: 500px; height: 500px;
+            background: var(--brand-glow);
+            left: -120px; top: -120px;
+            animation: float1 18s infinite alternate;
+        }
+        body::after {
+            width: 450px; height: 450px;
+            background: rgba(56, 189, 248, 0.2);
+            right: -100px; bottom: -100px;
+            animation: float2 20s infinite alternate;
+        }
+        @keyframes float1 { 0% { transform: translate(0, 0); } 100% { transform: translate(150px, 90px); } }
+        @keyframes float2 { 0% { transform: translate(0, 0); } 100% { transform: translate(-120px, -80px); } }
+
+        /* ---------- Nav Header ---------- */
+        nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 6vw;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+        .logo-dot {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 0 16px var(--brand-glow);
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+        .nav-links { display: flex; gap: 28px; }
+        .nav-link {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: .95rem;
+            font-weight: 500;
+            transition: .2s;
+        }
+        .nav-link:hover { color: var(--text); }
+
+        /* Color & Theme Toolbar */
+        .controls-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            backdrop-filter: blur(12px);
+        }
+        .color-dot {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .color-dot:hover { transform: scale(1.2); }
+        .theme-toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .theme-toggle-btn:hover { color: var(--primary); }
+
+        /* ---------- Hero Section ---------- */
+        .hero {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            margin: 6vh auto 8vh;
+            padding: 0 6vw;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            font-size: .85rem;
+            color: var(--muted);
+            margin-bottom: 28px;
+            backdrop-filter: blur(12px);
+        }
+        .hero-title {
+            font-size: clamp(2.2rem, 5vw, 3.6rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+            color: var(--text);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary), var(--secondary) 60%, var(--purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle {
+            color: var(--muted);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            max-width: 640px;
+            margin-bottom: 36px;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--btn-text);
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            box-shadow: 0 12px 30px var(--brand-glow);
+            transition: .3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 36px var(--brand-glow);
+        }
+
+        /* ---------- Features Section ---------- */
+        .features {
+            position: relative;
+            z-index: 2;
+            max-width: 1100px;
+            margin: 0 auto 10vh;
+            padding: 0 6vw;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(22px);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 32px 28px;
+            transition: .35s ease;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+        }
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+        .card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        .card p {
+            color: var(--muted);
+            font-size: .92rem;
+            line-height: 1.6;
+        }
+
+        /* ---------- Footer ---------- */
+        footer {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 32px 6vw 48px;
+            color: var(--muted);
+            font-size: .85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">
+            <div class="logo-dot"></div>
+            HIV Resistance Intelligence
+        </div>
+        
+        <div class="nav-right">
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="/app" class="nav-link">Launch App</a>
+            </div>
+
+            <div class="controls-wrapper">
+                <button class="color-dot" style="background:#34d399;" onclick="setLandingAccent('emerald')" title="Emerald"></button>
+                <button class="color-dot" style="background:#38bdf8;" onclick="setLandingAccent('cyan')" title="Cyan"></button>
+                <button class="color-dot" style="background:#8b5cf6;" onclick="setLandingAccent('violet')" title="Violet"></button>
+                <button class="color-dot" style="background:#f43f5e;" onclick="setLandingAccent('rose')" title="Rose"></button>
+                <button class="color-dot" style="background:#f59e0b;" onclick="setLandingAccent('amber')" title="Amber"></button>
+                
+                <button class="theme-toggle-btn" onclick="toggleLandingTheme()" title="Toggle Theme">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="hero">
+        <div class="badge">
+            <span>🧬 AI-Powered Clinical Decision Support</span>
+        </div>
+
+        <h1 class="hero-title">
+            AI-Powered HIV Drug Resistance Intelligence <br>
+            <span class="gradient-text">with complete control</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            Analyze HIV genomic sequences, identify resistance mutations,
+            predict treatment effectiveness, explore mutation databases,
+            and generate evidence-based clinical recommendations using AI.
+        </p>
+
+        <a href="/app" class="btn-primary">
+            <span>Launch Workspace</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </a>
+    </main>
+
+    <section class="features" id="features">
+        <div class="card">
+            <div class="card-icon">⚡</div>
+            <h3>Mutation Detection</h3>
+            <p>Upload HIV FASTA or CSV files and automatically identify
+            known resistance mutations across Reverse Transcriptase,
+            Protease, and Integrase genes.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">👁️</div>
+            <h3>Clinical AI Assistant</h3>
+            <p>Ask questions about drug resistance, treatment strategies,
+            mutation interactions, and receive evidence-based explanations
+            powered by AI.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">🛡️</div>
+            <h3>Global Resistance Database</h3>
+            <p>Search curated HIV mutations from international resistance
+            databases with drug susceptibility scores and clinical evidence.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">🔗</div>
+            <h3>Regimen Interaction Checker</h3>
+            <p>Select a multi-drug regimen and flag known pharmacologic
+            conflicts, with mechanism and management guidance for each.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">🕸️</div>
+            <h3>Mutation Co-occurrence Map</h3>
+            <p>Explore how resistance mutations cluster into known escape
+            pathways, from TAM clusters to INSTI compensatory pairs.</p>
+        </div>
+    </section>
+
+    <footer>
+        &copy; 2026 AI Application Platform. Built for developers.
+    </footer>
+
+    <script>
+        const accents = {
+            emerald: { primary: '#34d399', secondary: '#38bdf8', glow: 'rgba(52, 211, 153, 0.35)', btnText: '#04150f' },
+            cyan:    { primary: '#38bdf8', secondary: '#8b5cf6', glow: 'rgba(56, 189, 248, 0.35)', btnText: '#031726' },
+            violet:  { primary: '#a78bfa', secondary: '#f43f5e', glow: 'rgba(167, 139, 250, 0.35)', btnText: '#12072b' },
+            rose:    { primary: '#fb7185', secondary: '#f59e0b', glow: 'rgba(251, 113, 133, 0.35)', btnText: '#28040b' },
+            amber:   { primary: '#fbbf24', secondary: '#f43f5e', glow: 'rgba(251, 191, 36, 0.35)', btnText: '#261a02' }
+        };
+
+        function setLandingAccent(key) {
+            const config = accents[key] || accents.emerald;
+            const root = document.documentElement;
+            root.style.setProperty('--primary', config.primary);
+            root.style.setProperty('--secondary', config.secondary);
+            root.style.setProperty('--brand-glow', config.glow);
+            root.style.setProperty('--btn-text', config.btnText);
+            localStorage.setItem('bioai_accent', key);
+        }
+
+        function toggleLandingTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+
+            const icon = document.getElementById('theme-icon');
+            if (icon) {
+                icon.className = next === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+            }
+            localStorage.setItem('bioai_theme', next);
+        }
+
+        (function init() {
+            const savedTheme = localStorage.getItem('bioai_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const icon = document.getElementById('theme-icon');
+            if (icon) {
+                icon.className = savedTheme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+            }
+
+            const savedAccent = localStorage.getItem('bioai_accent') || 'emerald';
+            setLandingAccent(savedAccent);
+        })();
+    </script>
+</body>
+</html>

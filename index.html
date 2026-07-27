@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIV Resistance Tracker | Bio-AI</title>
+ 
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: 'var(--brand-50)',
+                            100: 'var(--brand-100)',
+                            500: 'var(--brand-500)',
+                            600: 'var(--brand-600)',
+                            700: 'var(--brand-700)',
+                        }
+                    },
+                    fontFamily: {
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                        body: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        data: ['"JetBrains Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+ 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+ 
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+ 
+        :root {
+            /* Preset Color Themes (Default: Emerald) */
+            --brand-primary: #10b981;
+            --brand-secondary: #06b6d4;
+            --brand-glow: rgba(16, 185, 129, 0.35);
+            --brand-50: #ecfdf5;
+            --brand-100: #d1fae5;
+            --brand-500: #10b981;
+            --brand-600: #059669;
+            --brand-700: #047857;
+ 
+            /* Dark Theme Base (Default) */
+            --bg-base: #05090f;
+            --bg-surface: rgba(13, 20, 33, 0.66);
+            --bg-card: rgba(22, 30, 46, 0.55);
+            --bg-card-strong: rgba(22, 30, 46, 0.78);
+            --border-glass: rgba(255, 255, 255, 0.10);
+            --border-glass-strong: rgba(255, 255, 255, 0.18);
+            --text-main: #f8fafc;
+            --text-muted: #98a7bd;
+            --text-subtle: #64748b;
+            --input-bg: rgba(10, 16, 27, 0.6);
+            --input-border: rgba(255, 255, 255, 0.14);
+            --shadow-glass: 0 24px 48px -18px rgba(0, 0, 0, 0.55);
+        }
+ 
+        [data-theme="light"] {
+            /* Light Theme Override */
+            --bg-base: #f3f5f9;
+            --bg-surface: rgba(255, 255, 255, 0.72);
+            --bg-card: rgba(255, 255, 255, 0.82);
+            --bg-card-strong: rgba(255, 255, 255, 0.92);
+            --border-glass: rgba(15, 23, 42, 0.08);
+            --border-glass-strong: rgba(15, 23, 42, 0.14);
+            --text-main: #0f172a;
+            --text-muted: #52607a;
+            --text-subtle: #7c8aa0;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-border: rgba(15, 23, 42, 0.14);
+            --shadow-glass: 0 16px 32px -14px rgba(15, 23, 42, 0.12);
+        }
+ 
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+ 
+        h1, h2, h3, .font-display, .brand-title { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.01em; }
+        .font-data, .mutation-code { font-family: 'JetBrains Mono', monospace; }
+ 
+        /* Ambient Glow Background */
+        .ambient-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .ambient-blob { position: absolute; border-radius: 50%; filter: blur(110px); opacity: 0.22; transition: background 0.5s ease; }
+        .blob-1 { width: 520px; height: 520px; background: var(--brand-primary); top: -120px; left: -100px; }
+        .blob-2 { width: 460px; height: 460px; background: var(--brand-secondary); bottom: -120px; right: -100px; }
+        .ambient-grid {
+            position: absolute; inset: 0;
+            background-image: linear-gradient(var(--border-glass) 1px, transparent 1px), linear-gradient(90deg, var(--border-glass) 1px, transparent 1px);
+            background-size: 64px 64px;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 75%);
+            opacity: 0.5;
+        }
+ 
+        /* ---------- Genomic ladder signature: used as a section divider ---------- */
+        .ladder-rail {
+            width: 3px;
+            align-self: stretch;
+            border-radius: 3px;
+            background-image: repeating-linear-gradient(to bottom, var(--brand-primary) 0px, var(--brand-primary) 3px, transparent 3px, transparent 11px);
+            opacity: 0.55;
+            flex-shrink: 0;
+        }
+        .ladder-divider {
+            height: 2px;
+            width: 100%;
+            background-image: repeating-linear-gradient(to right, var(--border-glass-strong) 0px, var(--border-glass-strong) 6px, transparent 6px, transparent 12px);
+        }
+ 
+        .eyebrow {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand-primary); box-shadow: 0 0 8px var(--brand-glow); }
+ 
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: var(--bg-surface);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid var(--border-glass);
+            box-shadow: var(--shadow-glass);
+        }
+ 
+        .glass-card {
+            position: relative;
+            background: var(--bg-card);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--border-glass);
+            box-shadow: var(--shadow-glass);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(150deg, rgba(255,255,255,0.16), rgba(255,255,255,0) 45%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        [data-theme="light"] .glass-card::before { background: linear-gradient(150deg, rgba(15,23,42,0.10), rgba(15,23,42,0) 45%); }
+ 
+        .glass-card:hover { border-color: var(--brand-glow); }
+ 
+        .mutation-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .mutation-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px var(--brand-glow); }
+ 
+        .tab-active { border-bottom: 3px solid var(--brand-primary); color: var(--brand-primary) !important; font-weight: 600; }
+ 
+        /* Custom Inputs */
+        .glass-input { background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); transition: all 0.2s ease; }
+        .glass-input:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-glow); }
+ 
+        /* Dynamic Color Accent Gradients */
+        .bg-brand-gradient { background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary)); }
+        .text-brand-gradient { background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn-brand { background: linear-gradient(135deg, var(--brand-primary), var(--brand-600)); color: #ffffff; box-shadow: 0 8px 20px -4px var(--brand-glow); transition: all 0.25s ease; }
+        .btn-brand:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 12px 24px -4px var(--brand-glow); }
+        .btn-brand:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+ 
+        /* Drug / interaction chips */
+        .chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 14px; border-radius: 999px;
+            background: var(--input-bg); border: 1px solid var(--input-border);
+            color: var(--text-muted); font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.18s ease; user-select: none;
+        }
+        .chip:hover { border-color: var(--brand-primary); color: var(--text-main); }
+        .chip.chip-active { background: var(--brand-primary); border-color: var(--brand-primary); color: #ffffff; box-shadow: 0 6px 16px -4px var(--brand-glow); }
+ 
+        /* Network nodes */
+        .net-node circle { transition: r 0.15s ease, filter 0.15s ease; cursor: pointer; }
+        .net-node:hover circle, .net-node.active circle { filter: drop-shadow(0 0 6px var(--brand-glow)); }
+        .net-edge { transition: opacity 0.2s ease, stroke-width 0.2s ease; }
+        .net-label { font-family: 'JetBrains Mono', monospace; pointer-events: none; }
+ 
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--brand-primary); }
+ 
+        @media (max-width: 1024px) {
+            .nav-tabs-scroll { overflow-x: auto; }
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-hidden font-body">
+ 
+    <div class="ambient-bg">
+        <div class="ambient-blob blob-1"></div>
+        <div class="ambient-blob blob-2"></div>
+        <div class="ambient-grid"></div>
+    </div>
+ 
+    <div class="flex h-screen relative z-10">
+ 
+        <aside class="sidebar w-80 flex flex-col glass-panel border-r">
+            <div class="p-6 border-b border-[var(--border-glass)]">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-brand-gradient shadow-lg shadow-[var(--brand-glow)]">
+                        🧬
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight text-[var(--text-main)] brand-title">HIV Resistance AI</h1>
+                        <p class="text-xs text-brand-gradient font-semibold font-display">Clinical Decision Platform</p>
+                    </div>
+                </div>
+            </div>
+ 
+            <div class="p-6 flex-1 overflow-auto space-y-7">
+ 
+                <div class="flex gap-4">
+                    <div class="ladder-rail"></div>
+                    <div class="flex-1">
+                        <div class="eyebrow"><span class="dot"></span>Patient</div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2">Patient ID</label>
+                        <input id="patient-id"
+                               value="PAT-9921"
+                               class="w-full px-4 py-3 rounded-2xl glass-input text-sm font-data">
+                    </div>
+                </div>
+ 
+                <div class="flex gap-4">
+                    <div class="ladder-rail"></div>
+                    <div class="flex-1 space-y-4">
+                        <div class="eyebrow"><span class="dot"></span>Sequence Input</div>
+                        <div>
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2">Reverse Transcriptase Sequence</label>
+                            <textarea id="gene-sequence" rows="3"
+                                      class="w-full px-4 py-3 rounded-2xl glass-input text-sm font-data">METLLDT...</textarea>
+                        </div>
+ 
+                        <div>
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2">Upload FASTA/CSV</label>
+                            <div class="border-2 border-dashed border-[var(--border-glass)] rounded-2xl p-6 text-center hover:border-[var(--brand-primary)] transition-colors bg-[var(--input-bg)]">
+                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-[var(--text-muted)] mb-2"></i>
+                                <p class="text-xs text-[var(--text-muted)]">Drop file or click to upload</p>
+                                <input type="file" id="file-upload" accept=".csv,.fasta" class="hidden">
+                                <button onclick="document.getElementById('file-upload').click()"
+                                        class="mt-3 px-4 py-2 bg-[var(--bg-card)] hover:bg-[var(--border-glass)] text-xs font-semibold rounded-xl text-[var(--text-main)] transition">
+                                    Choose File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+ 
+                <div class="flex gap-4">
+                    <div class="ladder-rail"></div>
+                    <div class="flex-1">
+                        <div class="eyebrow"><span class="dot"></span>Regimen</div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-[var(--text-subtle)] mb-2">Active Treatment Classes</label>
+                        <div class="flex flex-wrap gap-2" id="drug-classes"></div>
+                        <button onclick="switchTab(6)" class="mt-4 w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-[var(--input-bg)] border border-[var(--border-glass)] hover:border-[var(--brand-primary)] text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] transition">
+                            <span><i class="fa-solid fa-diagram-project mr-1.5"></i>Check regimen interactions</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            <div class="p-6 border-t border-[var(--border-glass)] mt-auto">
+                <button onclick="runAnalysis()"
+                        class="w-full btn-brand py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 text-sm font-display">
+                    <i class="fa-solid fa-bolt"></i>
+                    RUN RESISTANCE ANALYSIS
+                </button>
+            </div>
+        </aside>
+ 
+        <main class="flex-1 flex flex-col h-screen overflow-hidden">
+ 
+            <header class="h-20 px-8 flex items-center justify-between glass-panel border-b border-[var(--border-glass)] z-20">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-brand-gradient flex items-center justify-center shadow-lg shadow-[var(--brand-glow)]">
+                        <i class="fa-solid fa-dna text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-[var(--text-main)] tracking-tight brand-title">HIV Resistance Intelligence</h1>
+                        <p class="text-xs text-[var(--text-muted)]">AI Clinical Decision Support Platform</p>
+                    </div>
+                </div>
+ 
+                <div class="flex items-center gap-5 nav-tabs-scroll">
+                    <button id="tab-0" onclick="switchTab(0)" class="tab-active text-[var(--text-muted)] hover:text-[var(--text-main)] transition py-2 text-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-house"></i> Dashboard
+                    </button>
+                    <button id="tab-1" onclick="switchTab(1)" class="text-[var(--text-muted)] hover:text-[var(--text-main)] transition py-2 text-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-pills"></i> Therapy
+                    </button>
+                    <button id="tab-6" onclick="switchTab(6)" class="text-[var(--text-muted)] hover:text-[var(--text-main)] transition py-2 text-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-diagram-project"></i> Interactions
+                    </button>
+                    <button id="tab-3" onclick="switchTab(3)" class="text-[var(--text-muted)] hover:text-[var(--text-main)] transition py-2 text-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-database"></i> Database
+                    </button>
+                    <button id="tab-4" onclick="switchTab(4)" class="text-[var(--text-muted)] hover:text-[var(--text-main)] transition py-2 text-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-flask"></i> Research
+                    </button>
+                    <button id="tab-2" onclick="switchTab(2)" class="text-[var(--text-muted)] hover:text-[var(--text-main)] transition py-2 text-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-robot"></i> AI Assistant
+                    </button>
+                    <button id="tab-5" onclick="switchTab(5)" class="text-[var(--text-muted)] hover:text-[var(--text-main)] transition py-2 text-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-file-waveform"></i> Reports
+                    </button>
+                </div>
+ 
+                <div class="flex items-center gap-4 pl-4 border-l border-[var(--border-glass)]">
+                    <div class="flex items-center gap-1.5 bg-[var(--input-bg)] p-1.5 rounded-full border border-[var(--border-glass)]">
+                        <button onclick="setAccentColor('emerald')" class="w-5 h-5 rounded-full bg-emerald-500 hover:scale-110 transition" title="Emerald"></button>
+                        <button onclick="setAccentColor('cyan')" class="w-5 h-5 rounded-full bg-cyan-500 hover:scale-110 transition" title="Cyan"></button>
+                        <button onclick="setAccentColor('violet')" class="w-5 h-5 rounded-full bg-violet-500 hover:scale-110 transition" title="Violet"></button>
+                        <button onclick="setAccentColor('rose')" class="w-5 h-5 rounded-full bg-rose-500 hover:scale-110 transition" title="Rose"></button>
+                        <button onclick="setAccentColor('amber')" class="w-5 h-5 rounded-full bg-amber-500 hover:scale-110 transition" title="Amber"></button>
+                    </div>
+ 
+                    <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl glass-card flex items-center justify-center text-[var(--text-main)] hover:text-[var(--brand-primary)] transition" title="Toggle Theme">
+                        <i id="theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+ 
+            <div class="flex-1 overflow-auto p-8 relative z-10" id="tab-content">
+ 
+                <div id="content-0">
+                    <h1 class="text-3xl font-extrabold text-[var(--text-main)] mb-1 brand-title">HIV Drug Resistance Evolution Tracker</h1>
+                    <p class="text-[var(--text-muted)] mb-6 text-sm">Predicting structural escape patterns via sequence analysis</p>
+ 
+                    <div class="grid grid-cols-3 gap-6 mb-8">
+                        <div class="glass-card p-6 rounded-3xl">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Viral Fitness Score</div>
+                            <div class="text-4xl font-extrabold text-[var(--brand-primary)] mt-2 font-display">0.82</div>
+                            <div class="text-xs text-[var(--brand-primary)] font-medium mt-1">● Stable</div>
+                        </div>
+                        <div class="glass-card p-6 rounded-3xl" id="resistance-metric">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Resistance Probability</div>
+                            <div class="text-4xl font-extrabold text-amber-500 mt-2 font-display" id="risk-perc">45%</div>
+                            <div class="text-xs text-amber-500 font-medium mt-1">● Moderate</div>
+                        </div>
+                        <div class="glass-card p-6 rounded-3xl">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Mutation Count</div>
+                            <div class="text-4xl font-extrabold text-[var(--text-main)] mt-2 font-display" id="mutation-count">3</div>
+                        </div>
+                    </div>
+ 
+                    <div class="grid grid-cols-12 gap-6">
+                        <div class="col-span-8 glass-card p-6 rounded-3xl">
+                            <h2 class="font-semibold text-[var(--text-main)] mb-4 flex items-center gap-2 font-display">
+                                🧬 Structural Binding Affinity Map
+                            </h2>
+                            <div id="heatmap-container" class="h-96 w-full"></div>
+                        </div>
+ 
+                        <div class="col-span-4 glass-card p-6 rounded-3xl">
+                            <h2 class="font-semibold text-[var(--text-main)] mb-4 font-display">Detected Resistance Mutations</h2>
+                            <div id="detected-mutations-list" class="space-y-3 max-h-96 overflow-auto pr-1"></div>
+                        </div>
+                    </div>
+                </div>
+ 
+                <div id="content-1" class="hidden">
+                    <h1 class="text-3xl font-extrabold text-[var(--text-main)] mb-1 brand-title">Personalized Therapy Recommendations</h1>
+                    <p class="text-[var(--text-muted)] mb-6 text-sm">Based on the mutations detected in the most recent analysis</p>
+ 
+                    <div class="glass-card p-6 rounded-3xl mb-6">
+                        <div id="resistance-summary" class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-[var(--input-bg)] flex items-center justify-center text-xl text-[var(--text-muted)] border border-[var(--border-glass)]">
+                                <i class="fa-solid fa-flask-vial"></i>
+                            </div>
+                            <div>
+                                <div class="text-base font-semibold text-[var(--text-muted)]">No analysis yet</div>
+                                <p class="text-xs text-[var(--text-subtle)]">Run a resistance analysis from the Dashboard to see personalized therapy guidance here.</p>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass-card p-6 rounded-3xl">
+                            <h3 class="font-semibold mb-4 flex items-center gap-2 text-red-500 font-display">
+                                <i class="fa-solid fa-ban"></i> Avoid
+                            </h3>
+                            <div id="avoid-list" class="space-y-2">
+                                <div class="text-xs text-[var(--text-muted)]">No data yet</div>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6 rounded-3xl">
+                            <h3 class="font-semibold mb-4 flex items-center gap-2 text-amber-500 font-display">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Use With Caution
+                            </h3>
+                            <div id="caution-list" class="space-y-2">
+                                <div class="text-xs text-[var(--text-muted)]">No data yet</div>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    <div class="mt-6 glass-card p-6 rounded-3xl">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2 text-[var(--brand-primary)] font-display">
+                            <i class="fa-solid fa-circle-check"></i> Potential Treatment Options
+                        </h3>
+                        <div id="treatment-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="text-xs text-[var(--text-muted)]">No data yet</div>
+                        </div>
+                    </div>
+                </div>
+ 
+                <div id="content-2" class="hidden flex flex-col h-full min-h-[500px]">
+                    <div class="flex-1 overflow-auto p-4 space-y-4" id="chat-messages"></div>
+ 
+                    <div class="pt-4 border-t border-[var(--border-glass)]">
+                        <div class="flex gap-3">
+                            <input id="chat-input"
+                                   class="flex-1 px-5 py-3.5 rounded-2xl glass-input text-sm"
+                                   placeholder="Ask about mutations, therapy, or interpretation...">
+                            <button onclick="sendChatMessage()" class="btn-brand px-6 rounded-2xl">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+ 
+                <div id="content-3" class="hidden">
+                    <h1 class="text-3xl font-extrabold text-[var(--text-main)] mb-6 brand-title">Mutation Database</h1>
+                    <div class="mb-6 relative max-w-md">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"></i>
+                        <input id="mutation-search"
+                               placeholder="Search by mutation, gene, drug, or class..."
+                               class="w-full pl-11 pr-4 py-3 rounded-2xl glass-input text-sm">
+                    </div>
+                    <div class="glass-card rounded-3xl overflow-hidden border border-[var(--border-glass)]">
+                        <table class="w-full text-left border-collapse" id="mutation-table">
+                            <thead>
+                                <tr class="border-b border-[var(--border-glass)] bg-[var(--input-bg)] text-[var(--text-muted)] text-xs uppercase tracking-wider font-display">
+                                    <th class="p-4">Mutation</th>
+                                    <th class="p-4">Gene</th>
+                                    <th class="p-4">Drug</th>
+                                    <th class="p-4">Class</th>
+                                    <th class="p-4">Recommendation</th>
+                                    <th class="p-4">Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[var(--border-glass)] text-sm text-[var(--text-main)]" id="mutation-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+ 
+                <div id="content-4" class="hidden">
+                    <h1 class="text-3xl font-extrabold text-[var(--text-main)] mb-2 brand-title">Research &amp; Evidence</h1>
+                    <p class="text-[var(--text-muted)] mb-8 text-sm">Clinical evidence backing each mutation in the current database, grouped by gene target.</p>
+                    <div id="research-groups" class="space-y-6"></div>
+                </div>
+ 
+                <div id="content-5" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-3xl font-extrabold text-[var(--text-main)] brand-title">Clinical Report</h1>
+                        <button onclick="window.print()" class="btn-brand px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i> Print / Save PDF
+                        </button>
+                    </div>
+                    <div class="glass-card p-8 rounded-3xl" id="report-container">
+                        <p class="text-[var(--text-muted)] text-sm">Run an analysis from the Dashboard to generate a report.</p>
+                    </div>
+                </div>
+ 
+                <div id="content-6" class="hidden">
+                    <h1 class="text-3xl font-extrabold text-[var(--text-main)] mb-2 brand-title">Interactions</h1>
+                    <p class="text-[var(--text-muted)] mb-8 text-sm">Cross-check a multi-drug regimen for pharmacologic conflicts, and explore how resistance mutations cluster into known escape pathways.</p>
+ 
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+ 
+                        <div class="glass-card p-6 rounded-3xl">
+                            <div class="eyebrow"><span class="dot"></span>Regimen Interaction Checker</div>
+                            <h2 class="text-lg font-bold text-[var(--text-main)] mb-1 font-display">Select the drugs in this regimen</h2>
+                            <p class="text-xs text-[var(--text-muted)] mb-4">Tap to add or remove a drug, then check for known pharmacologic conflicts.</p>
+ 
+                            <div id="interaction-drug-chips" class="flex flex-wrap gap-2 mb-5"></div>
+ 
+                            <div class="flex items-center gap-3 mb-5">
+                                <button onclick="checkInteractions()" class="btn-brand px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 font-display">
+                                    <i class="fa-solid fa-magnifying-glass-chart"></i> CHECK INTERACTIONS
+                                </button>
+                                <button onclick="clearInteractionSelection()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-glass)] transition">
+                                    Clear
+                                </button>
+                            </div>
+ 
+                            <div class="ladder-divider mb-5"></div>
+ 
+                            <div id="interaction-results" class="space-y-3">
+                                <div class="text-xs text-[var(--text-muted)]">Select two or more drugs above, then run a check. This reference set covers common, clinically significant pairings and is not exhaustive.</div>
+                            </div>
+                        </div>
+ 
+                        <div class="glass-card p-6 rounded-3xl">
+                            <div class="eyebrow"><span class="dot"></span>Mutation Co-occurrence Network</div>
+                            <h2 class="text-lg font-bold text-[var(--text-main)] mb-1 font-display">How resistance mutations cluster</h2>
+                            <p class="text-xs text-[var(--text-muted)] mb-4">Nodes are mutations, grouped by gene. Click a node to see which pairings matter clinically and why.</p>
+ 
+                            <div class="w-full overflow-x-auto">
+                                <svg id="cooccurrence-svg" viewBox="0 0 1000 620" class="w-full" style="min-width:640px; height:420px;"></svg>
+                            </div>
+ 
+                            <div id="cooccurrence-legend" class="flex flex-wrap gap-x-4 gap-y-2 mt-3 text-[10px] text-[var(--text-muted)]"></div>
+ 
+                            <div class="ladder-divider my-5"></div>
+ 
+                            <div id="cooccurrence-detail" class="space-y-3">
+                                <div class="text-xs text-[var(--text-muted)]">Click any mutation node to view its known co-occurrence partners and clinical significance.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+ 
+            </div>
+        </main>
+    </div>
+ 
+    <script>
+        let currentTab = 0;
+        let detectedMutations = [];
+        let mutationDatabase = [];
+        let lastAnalysis = null;
+ 
+        let interactionDrugs = [];
+        let selectedInteractionDrugs = new Set();
+        let cooccurrenceData = [];
+        let cooccurrenceNodePositions = {};
+ 
+        // ---------- Theme & Accent Color Palette Logic ----------
+        const themePresets = {
+            emerald: { primary: '#10b981', secondary: '#06b6d4', glow: 'rgba(16, 185, 129, 0.35)', 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857' },
+            cyan:    { primary: '#06b6d4', secondary: '#3b82f6', glow: 'rgba(6, 182, 212, 0.35)', 50: '#ecfeff', 100: '#cffaff', 500: '#06b6d4', 600: '#0891b2', 700: '#0e7490' },
+            violet:  { primary: '#8b5cf6', secondary: '#ec4899', glow: 'rgba(139, 92, 246, 0.35)', 50: '#f5f3ff', 100: '#ede9fe', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9' },
+            rose:    { primary: '#f43f5e', secondary: '#f97316', glow: 'rgba(244, 63, 94, 0.35)', 50: '#fff1f2', 100: '#ffe4e6', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c' },
+            amber:   { primary: '#f59e0b', secondary: '#ef4444', glow: 'rgba(245, 158, 11, 0.35)', 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' }
+        };
+ 
+        function setAccentColor(colorKey) {
+            const theme = themePresets[colorKey] || themePresets.emerald;
+            const root = document.documentElement;
+            root.style.setProperty('--brand-primary', theme.primary);
+            root.style.setProperty('--brand-secondary', theme.secondary);
+            root.style.setProperty('--brand-glow', theme.glow);
+            root.style.setProperty('--brand-50', theme[50]);
+            root.style.setProperty('--brand-100', theme[100]);
+            root.style.setProperty('--brand-500', theme[500]);
+            root.style.setProperty('--brand-600', theme[600]);
+            root.style.setProperty('--brand-700', theme[700]);
+            localStorage.setItem('bioai_accent', colorKey);
+            renderHeatmap();
+            if (cooccurrenceData.length) renderCooccurrenceNetwork(cooccurrenceData);
+        }
+ 
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+ 
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.className = newTheme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+            localStorage.setItem('bioai_theme', newTheme);
+            renderHeatmap();
+            if (cooccurrenceData.length) renderCooccurrenceNetwork(cooccurrenceData);
+        }
+ 
+        function initCustomization() {
+            const savedTheme = localStorage.getItem('bioai_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.className = savedTheme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+ 
+            const savedAccent = localStorage.getItem('bioai_accent') || 'emerald';
+            setAccentColor(savedAccent);
+        }
+ 
+        // ---------- App Functionalities ----------
+        async function fetchMutations(query) {
+            const url = query ? `/api/search?q=${encodeURIComponent(query)}` : '/api/mutations';
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+            return res.json();
+        }
+ 
+        async function fetchInteractions(drugs) {
+            const res = await fetch('/api/interactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ drugs })
+            });
+            if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+            return res.json();
+        }
+ 
+        async function fetchCooccurrence() {
+            const res = await fetch('/api/cooccurrence');
+            if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+            return res.json();
+        }
+ 
+        function switchTab(tabIndex) {
+            document.querySelectorAll('[id^="content-"]').forEach(page => page.classList.add("hidden"));
+            const selectedPage = document.getElementById(`content-${tabIndex}`);
+            if (selectedPage) selectedPage.classList.remove("hidden");
+ 
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.remove("tab-active"));
+            const selectedTab = document.getElementById(`tab-${tabIndex}`);
+            if (selectedTab) selectedTab.classList.add("tab-active");
+ 
+            currentTab = tabIndex;
+ 
+            if (tabIndex === 6 && cooccurrenceData.length) {
+                // Redraw on tab switch so the SVG picks up correct rendered width
+                renderCooccurrenceNetwork(cooccurrenceData);
+            }
+        }
+ 
+        function renderDetectedMutations(mutations) {
+            const container = document.getElementById('detected-mutations-list');
+            container.innerHTML = '';
+ 
+            if (!mutations || mutations.length === 0) {
+                container.innerHTML = '<div class="text-xs text-[var(--text-muted)]">No mutations detected yet. Run an analysis to populate this list.</div>';
+                return;
+            }
+ 
+            mutations.forEach(m => {
+                const isSevere = m.Severity === 'Critical' || m.Severity === 'High';
+                const card = document.createElement('div');
+                card.className = 'mutation-card glass-card p-3.5 rounded-2xl border';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="mutation-code text-base font-bold ${isSevere ? 'text-red-500' : 'text-amber-500'}">${m.Mutation}</div>
+                            <div class="text-xs text-[var(--text-muted)] mt-0.5">${m.Severity} impact · ${m.Drug_Class}</div>
+                        </div>
+                        <span class="px-2.5 py-1 ${isSevere ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'} text-[10px] font-bold rounded-full uppercase tracking-wider">${m.Recommendation}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+ 
+        function renderMutationTable(rows) {
+            const tbody = document.getElementById('mutation-tbody');
+            tbody.innerHTML = '';
+ 
+            rows.forEach(m => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-[var(--input-bg)] transition-colors';
+                row.innerHTML = `
+                    <td class="p-4 mutation-code font-semibold text-[var(--brand-primary)]">${m.Mutation}</td>
+                    <td class="p-4 text-[var(--text-muted)]">${m.Gene ?? ''}</td>
+                    <td class="p-4">${m.Drug}</td>
+                    <td class="p-4"><span class="px-2.5 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs font-medium">${m.Drug_Class}</span></td>
+                    <td class="p-4">${m.Recommendation}</td>
+                    <td class="p-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${m.Severity === 'Critical' || m.Severity === 'High' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}">
+                            ${m.Severity}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+ 
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-[var(--text-muted)]">No matching mutations found.</td></tr>`;
+            }
+        }
+ 
+        function renderResearch(rows) {
+            const container = document.getElementById('research-groups');
+            container.innerHTML = '';
+ 
+            const byGene = {};
+            rows.forEach(m => {
+                const gene = m.Gene || 'Other';
+                (byGene[gene] = byGene[gene] || []).push(m);
+            });
+ 
+            Object.entries(byGene).forEach(([gene, muts]) => {
+                const group = document.createElement('div');
+                group.className = 'glass-card p-6 rounded-3xl';
+                group.innerHTML = `
+                    <h2 class="font-bold text-lg text-[var(--text-main)] mb-4 font-display">${gene}</h2>
+                    <div class="space-y-3">
+                        ${muts.map(m => `
+                            <div class="border-l-4 pl-4 py-1" style="border-color:${m.Severity === 'Critical' || m.Severity === 'High' ? '#ef4444' : '#f59e0b'}">
+                                <div class="mutation-code font-bold text-[var(--text-main)]">${m.Mutation} <span class="text-xs text-[var(--text-muted)] font-sans">(${m.Drug_Class}, codon ${m.Codon ?? '—'})</span></div>
+                                <div class="text-xs text-[var(--text-muted)] mt-1">${m.Description}</div>
+                                <div class="text-[10px] text-[var(--text-subtle)] mt-1">Source: ${m.Evidence ?? 'Stanford HIVdb'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(group);
+            });
+        }
+ 
+        function renderHeatmap() {
+            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+            const data = {
+                z: Array(12).fill().map(() => Array(12).fill().map(() => Math.random())),
+                colorscale: 'Viridis',
+                type: 'heatmap'
+            };
+ 
+            const layout = {
+                title: { text: 'Predicted Binding Site Disruptions', font: { color: isDark ? '#f8fafc' : '#0f172a', size: 14, family: 'Space Grotesk' } },
+                height: 380,
+                margin: { t: 40, b: 40, l: 40, r: 40 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                xaxis: { showgrid: false, color: isDark ? '#94a3b8' : '#475569' },
+                yaxis: { showgrid: false, color: isDark ? '#94a3b8' : '#475569' }
+            };
+ 
+            Plotly.newPlot('heatmap-container', [data], layout, { responsive: true, displayModeBar: false });
+        }
+ 
+        async function runAnalysis() {
+            const patientId = document.getElementById('patient-id').value;
+            const sequence = document.getElementById('gene-sequence').value;
+            const button = event?.currentTarget;
+            if (button) { button.disabled = true; button.innerText = 'Analyzing...'; }
+ 
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sequence })
+                });
+                if (!res.ok) throw new Error(`Analyze failed: ${res.status}`);
+                const data = await res.json();
+ 
+                lastAnalysis = { patientId, sequence, ...data };
+                detectedMutations = data.mutations.map(m => m.Mutation);
+ 
+                const riskEl = document.getElementById('risk-perc');
+                riskEl.textContent = `${data.risk}%`;
+                const label = data.risk >= 60 ? '● High' : data.risk >= 30 ? '● Moderate' : '● Low';
+                riskEl.parentElement.querySelector('div:last-child').innerHTML = label;
+                document.getElementById('mutation-count').textContent = data.mutations.length;
+ 
+                renderDetectedMutations(data.mutations);
+                renderTherapyTab(data.mutations, data.risk);
+                renderReport();
+                switchTab(1);
+            } catch (err) {
+                alert(`Analysis failed: ${err.message}`);
+            } finally {
+                if (button) { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-bolt"></i> RUN RESISTANCE ANALYSIS'; }
+            }
+        }
+ 
+        function renderTherapyTab(mutations, risk) {
+            const summary = document.getElementById('resistance-summary');
+            const avoidList = document.getElementById('avoid-list');
+            const cautionList = document.getElementById('caution-list');
+            const treatmentOptions = document.getElementById('treatment-options');
+ 
+            const level = risk >= 60 ? 'high' : risk >= 30 ? 'moderate' : 'low';
+            const styles = {
+                high:     { bg: 'bg-red-500/10', text: 'text-red-500', icon: 'fa-triangle-exclamation', label: 'High Resistance Risk' },
+                moderate: { bg: 'bg-amber-500/10', text: 'text-amber-500', icon: 'fa-circle-exclamation', label: 'Moderate Resistance Risk' },
+                low:      { bg: 'bg-emerald-500/10', text: 'text-emerald-500', icon: 'fa-circle-check', label: 'Low Resistance Risk' },
+            }[level];
+ 
+            summary.innerHTML = `
+                <div class="w-12 h-12 rounded-2xl ${styles.bg} flex items-center justify-center text-xl ${styles.text}">
+                    <i class="fa-solid ${styles.icon}"></i>
+                </div>
+                <div>
+                    <div class="text-base font-bold ${styles.text}">${styles.label} (${risk}%)</div>
+                    <p class="text-xs text-[var(--text-muted)] mt-0.5">
+                        ${mutations.length
+                            ? `${mutations.length} resistance mutation(s) detected. Review the Avoid / Caution lists below before selecting a regimen.`
+                            : 'No known resistance mutations detected in the submitted sequence.'}
+                    </p>
+                </div>
+            `;
+ 
+            const avoid = mutations.filter(m => m.Recommendation === 'Avoid');
+            const caution = mutations.filter(m => m.Recommendation === 'Use With Caution');
+ 
+            const emptyRow = (icon, text, color) => `
+                <div class="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                    <i class="fa-solid ${icon} ${color}"></i> ${text}
+                </div>`;
+ 
+            avoidList.innerHTML = avoid.length
+                ? avoid.map(m => `
+                    <div class="flex items-start gap-3 p-3 bg-red-500/5 border border-red-500/20 rounded-xl">
+                        <i class="fa-solid fa-ban text-red-500 mt-0.5"></i>
+                        <div>
+                            <div class="text-xs text-[var(--text-main)]"><span class="mutation-code font-bold">${m.Mutation}</span> — ${m.Drug}</div>
+                            <div class="text-[10px] text-red-400 mt-0.5">${m.Severity} severity · ${m.Drug_Class}</div>
+                        </div>
+                    </div>`).join('')
+                : emptyRow('fa-circle-check', 'No drugs flagged to avoid', 'text-emerald-400');
+ 
+            cautionList.innerHTML = caution.length
+                ? caution.map(m => `
+                    <div class="flex items-start gap-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5"></i>
+                        <div>
+                            <div class="text-xs text-[var(--text-main)]"><span class="mutation-code font-bold">${m.Mutation}</span> — ${m.Drug}</div>
+                            <div class="text-[10px] text-amber-500 mt-0.5">${m.Severity} severity · ${m.Drug_Class}</div>
+                        </div>
+                    </div>`).join('')
+                : emptyRow('fa-circle-check', 'Nothing requires added caution', 'text-emerald-400');
+ 
+            const affectedClasses = new Set(mutations.map(m => m.Drug_Class));
+            const allClasses = ['NRTI', 'NNRTI', 'PI', 'INSTI', 'FI', 'CAI'];
+            const clearClasses = allClasses.filter(c => !affectedClasses.has(c));
+ 
+            treatmentOptions.innerHTML = clearClasses.length
+                ? clearClasses.map(c => `
+                    <div class="glass-card p-4 rounded-2xl flex items-center gap-3">
+                        <i class="fa-solid fa-circle-check text-[var(--brand-primary)] text-lg"></i>
+                        <div>
+                            <span class="font-bold text-sm text-[var(--text-main)]">${c}</span>
+                            <div class="text-xs text-[var(--text-muted)]">No detected resistance mutations in this class</div>
+                        </div>
+                    </div>`).join('')
+                : `<div class="text-xs text-[var(--text-muted)] md:col-span-2">All major classes show at least one flagged mutation — consult a specialist.</div>`;
+        }
+ 
+        function renderReport() {
+            const container = document.getElementById('report-container');
+            if (!lastAnalysis) {
+                container.innerHTML = '<p class="text-xs text-[var(--text-muted)]">Run an analysis from the Dashboard to generate a report.</p>';
+                return;
+            }
+            const { patientId, risk, mutations } = lastAnalysis;
+            container.innerHTML = `
+                <div class="mb-4">
+                    <div class="text-xs text-[var(--text-muted)]">Patient ID</div>
+                    <div class="text-lg font-bold text-[var(--text-main)] mutation-code">${patientId || 'N/A'}</div>
+                </div>
+                <div class="mb-4">
+                    <div class="text-xs text-[var(--text-muted)]">Resistance Risk</div>
+                    <div class="text-2xl font-extrabold text-[var(--brand-primary)] font-display">${risk}%</div>
+                </div>
+                <div>
+                    <div class="text-xs text-[var(--text-muted)] mb-2">Detected Mutations (${mutations.length})</div>
+                    ${mutations.length ? `<ul class="list-disc list-inside space-y-1 text-xs text-[var(--text-main)]">${mutations.map(m => `<li><span class="mutation-code font-bold">${m.Mutation}</span> — ${m.Recommendation} (${m.Drug})</li>`).join('')}</ul>` : '<p class="text-xs text-[var(--text-muted)]">None detected.</p>'}
+                </div>
+            `;
+        }
+        // ---------- Regimen Interaction Checker ----------
+        function renderInteractionChips() {
+            const container = document.getElementById('interaction-drug-chips');
+            container.innerHTML = interactionDrugs.map(drug => `
+                <button type="button" class="chip ${selectedInteractionDrugs.has(drug) ? 'chip-active' : ''}" onclick="toggleInteractionDrug('${drug.replace(/'/g, "\\'")}')">
+                    ${selectedInteractionDrugs.has(drug) ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''} ${drug}
+                </button>
+            `).join('');
+        }
+ 
+        function toggleInteractionDrug(drug) {
+            if (selectedInteractionDrugs.has(drug)) selectedInteractionDrugs.delete(drug);
+            else selectedInteractionDrugs.add(drug);
+            renderInteractionChips();
+        }
+ 
+        function clearInteractionSelection() {
+            selectedInteractionDrugs.clear();
+            renderInteractionChips();
+            document.getElementById('interaction-results').innerHTML =
+                '<div class="text-xs text-[var(--text-muted)]">Select two or more drugs above, then run a check. This reference set covers common, clinically significant pairings and is not exhaustive.</div>';
+        }
+ 
+        const severityStyle = {
+            'Contraindicated': { bg: 'bg-red-500/10', border: 'border-red-500/25', text: 'text-red-500', icon: 'fa-ban' },
+            'Major':           { bg: 'bg-orange-500/10', border: 'border-orange-500/25', text: 'text-orange-500', icon: 'fa-triangle-exclamation' },
+            'Moderate':        { bg: 'bg-amber-500/10', border: 'border-amber-500/25', text: 'text-amber-500', icon: 'fa-circle-exclamation' },
+        };
+ 
+        async function checkInteractions() {
+            const resultsEl = document.getElementById('interaction-results');
+            const drugs = Array.from(selectedInteractionDrugs);
+ 
+            if (drugs.length < 2) {
+                resultsEl.innerHTML = '<div class="text-xs text-amber-500"><i class="fa-solid fa-circle-info mr-1"></i>Select at least two drugs to check for interactions.</div>';
+                return;
+            }
+ 
+            resultsEl.innerHTML = '<div class="text-xs text-[var(--text-muted)]">Checking regimen...</div>';
+ 
+            try {
+                const flagged = await fetchInteractions(drugs);
+                if (!flagged.length) {
+                    resultsEl.innerHTML = `
+                        <div class="flex items-start gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                            <i class="fa-solid fa-circle-check text-emerald-400 mt-0.5"></i>
+                            <div class="text-xs text-[var(--text-main)]">No known interactions among the selected drugs in this reference set.</div>
+                        </div>`;
+                    return;
+                }
+                resultsEl.innerHTML = flagged.map(row => {
+                    const s = severityStyle[row.Severity] || severityStyle['Moderate'];
+                    return `
+                        <div class="flex items-start gap-3 p-3 ${s.bg} border ${s.border} rounded-xl">
+                            <i class="fa-solid ${s.icon} ${s.text} mt-0.5"></i>
+                            <div>
+                                <div class="text-xs text-[var(--text-main)] font-semibold">${row.Drug_A} + ${row.Drug_B}
+                                    <span class="ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${s.bg} ${s.text}">${row.Severity}</span>
+                                </div>
+                                <div class="text-[11px] text-[var(--text-muted)] mt-1">${row.Mechanism}</div>
+                                <div class="text-[11px] ${s.text} mt-1"><i class="fa-solid fa-arrow-turn-down-right mr-1"></i>${row.Recommendation}</div>
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (err) {
+                resultsEl.innerHTML = `<div class="text-xs text-red-500">Could not check interactions: ${err.message}</div>`;
+            }
+        }
+ 
+        // ---------- Mutation Co-occurrence Network ----------
+        const pathwayPalette = {};
+        const pathwayColorList = ['#f43f5e', '#3b82f6', '#f59e0b', '#a855f7', '#10b981', '#06b6d4', '#eab308', '#ec4899'];
+        function colorForPathway(pathway) {
+            if (!pathwayPalette[pathway]) {
+                const idx = Object.keys(pathwayPalette).length % pathwayColorList.length;
+                pathwayPalette[pathway] = pathwayColorList[idx];
+            }
+            return pathwayPalette[pathway];
+        }
+ 
+        const geneColumns = {
+            'Reverse Transcriptase': 0,
+            'Protease': 1,
+            'Integrase': 2,
+        };
+ 
+        function renderCooccurrenceNetwork(rows) {
+            const svg = document.getElementById('cooccurrence-svg');
+            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+            const mutedColor = isDark ? '#98a7bd' : '#52607a';
+ 
+            // Build node list grouped by gene
+            const nodesByGene = {};
+            rows.forEach(r => {
+                [r.Mutation_A, r.Mutation_B].forEach(m => {
+                    if (!nodesByGene[r.Gene]) nodesByGene[r.Gene] = new Set();
+                    nodesByGene[r.Gene].add(m);
+                });
+            });
+ 
+            const width = 1000, height = 620;
+            const colWidth = width / Object.keys(geneColumns).length;
+            cooccurrenceNodePositions = {};
+ 
+            Object.entries(nodesByGene).forEach(([gene, nodeSet]) => {
+                const col = geneColumns[gene] ?? 0;
+                const cx = colWidth * col + colWidth / 2;
+                const cy = height / 2;
+                const nodes = Array.from(nodeSet);
+                const radius = Math.min(colWidth / 2 - 60, 40 + nodes.length * 14);
+                nodes.forEach((m, i) => {
+                    const angle = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
+                    cooccurrenceNodePositions[m] = {
+                        x: cx + radius * Math.cos(angle),
+                        y: cy + radius * Math.sin(angle),
+                        gene
+                    };
+                });
+            });
+ 
+            let svgContent = '';
+ 
+            // Column headers
+            Object.entries(geneColumns).forEach(([gene, col]) => {
+                const cx = colWidth * col + colWidth / 2;
+                svgContent += `<text x="${cx}" y="34" text-anchor="middle" fill="${mutedColor}" font-size="12" font-weight="700" letter-spacing="1.5" font-family="Space Grotesk">${gene.toUpperCase()}</text>`;
+            });
+ 
+            // Edges
+            rows.forEach(r => {
+                const a = cooccurrenceNodePositions[r.Mutation_A];
+                const b = cooccurrenceNodePositions[r.Mutation_B];
+                if (!a || !b) return;
+                const color = colorForPathway(r.Pathway);
+                const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2 - 14;
+                svgContent += `<path class="net-edge" data-a="${r.Mutation_A}" data-b="${r.Mutation_B}"
+                    d="M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}"
+                    stroke="${color}" stroke-width="2" fill="none" opacity="0.45"/>`;
+            });
+ 
+            // Nodes
+            Object.entries(cooccurrenceNodePositions).forEach(([mutation, pos]) => {
+                svgContent += `
+                    <g class="net-node" data-mutation="${mutation}" onclick="selectCooccurrenceNode('${mutation}')">
+                        <circle cx="${pos.x}" cy="${pos.y}" r="20" fill="var(--bg-card-strong)" stroke="var(--brand-primary)" stroke-width="2"/>
+                        <text class="net-label" x="${pos.x}" y="${pos.y + 4}" text-anchor="middle" font-size="10" font-weight="700" fill="${textColor}">${mutation}</text>
+                    </g>`;
+            });
+ 
+            svg.innerHTML = svgContent;
+ 
+            const legend = document.getElementById('cooccurrence-legend');
+            legend.innerHTML = Object.entries(pathwayPalette).map(([pathway, color]) => `
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${color}"></span>${pathway}
+                </div>`).join('');
+        }
+ 
+        function selectCooccurrenceNode(mutation) {
+            document.querySelectorAll('.net-node').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll(`.net-node[data-mutation="${mutation}"]`).forEach(n => n.classList.add('active'));
+ 
+            document.querySelectorAll('.net-edge').forEach(e => {
+                const involved = e.getAttribute('data-a') === mutation || e.getAttribute('data-b') === mutation;
+                e.setAttribute('opacity', involved ? '0.95' : '0.12');
+                e.setAttribute('stroke-width', involved ? '3' : '2');
+            });
+ 
+            const related = cooccurrenceData.filter(r => r.Mutation_A === mutation || r.Mutation_B === mutation);
+            const detail = document.getElementById('cooccurrence-detail');
+            if (!related.length) {
+                detail.innerHTML = '<div class="text-xs text-[var(--text-muted)]">No curated pairings for this mutation.</div>';
+                return;
+            }
+            detail.innerHTML = `
+                <div class="text-xs font-bold text-[var(--text-main)] mb-2 mutation-code">${mutation}</div>
+                ${related.map(r => {
+                    const partner = r.Mutation_A === mutation ? r.Mutation_B : r.Mutation_A;
+                    const color = colorForPathway(r.Pathway);
+                    return `
+                        <div class="p-3 rounded-xl border" style="border-color:${color}40; background:${color}14">
+                            <div class="text-xs font-semibold text-[var(--text-main)]">with <span class="mutation-code">${partner}</span>
+                                <span class="ml-1.5 text-[9px] uppercase tracking-wider font-bold" style="color:${color}">${r.Pathway}</span>
+                            </div>
+                            <div class="text-[11px] text-[var(--text-muted)] mt-1">${r.Clinical_Significance}</div>
+                        </div>`;
+                }).join('')}
+            `;
+        }
+ 
+        // Chatbot Implementation
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+ 
+            addChatMessage('user', message);
+            input.value = '';
+ 
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                if (!res.ok) throw new Error(`Chat failed: ${res.status}`);
+                const data = await res.json();
+                addChatMessage('assistant', data.response);
+            } catch (err) {
+                addChatMessage('assistant', `Sorry, I hit an error reaching the server: ${err.message}`);
+            }
+        }
+ 
+        function addChatMessage(role, content) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} chat-message`;
+ 
+            if (role === 'user') {
+                div.innerHTML = `
+                    <div class="btn-brand text-white px-5 py-3 rounded-3xl rounded-tr-none text-sm max-w-[80%]">
+                        ${content}
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="glass-card px-5 py-3 rounded-3xl rounded-tl-none text-sm text-[var(--text-main)] max-w-[80%] border border-[var(--border-glass)]">
+                        ${content}
+                    </div>
+                `;
+            }
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+ 
+        function extractDrugSet(interactionRows) {
+            const drugs = new Set();
+            interactionRows.forEach(r => { drugs.add(r.Drug_A); drugs.add(r.Drug_B); });
+            return Array.from(drugs).sort();
+        }
+ 
+        async function initializeApp() {
+            initCustomization();
+ 
+            const classesContainer = document.getElementById('drug-classes');
+            const classes = ['NNRTI', 'NRTI', 'PI', 'INSTI', 'FI', 'CAI'];
+            classes.forEach(cls => {
+                const pill = document.createElement('div');
+                pill.className = 'px-3 py-1.5 bg-[var(--input-bg)] text-[var(--brand-primary)] border border-[var(--border-glass)] text-xs font-semibold rounded-xl cursor-pointer hover:border-[var(--brand-primary)] transition mutation-code';
+                pill.textContent = cls;
+                classesContainer.appendChild(pill);
+            });
+ 
+            renderDetectedMutations([]);
+            renderHeatmap();
+ 
+            try {
+                mutationDatabase = await fetchMutations();
+                renderMutationTable(mutationDatabase);
+                renderResearch(mutationDatabase);
+            } catch (err) {
+                document.getElementById('mutation-tbody').innerHTML =
+                    `<tr><td colspan="6" class="p-6 text-center text-red-500">Failed to load database: ${err.message}</td></tr>`;
+            }
+ 
+            try {
+                const allInteractions = await fetchInteractions([]);
+                interactionDrugs = extractDrugSet(allInteractions);
+                renderInteractionChips();
+            } catch (err) {
+                document.getElementById('interaction-drug-chips').innerHTML =
+                    `<div class="text-xs text-red-500">Failed to load interaction reference set: ${err.message}</div>`;
+            }
+ 
+            try {
+                cooccurrenceData = await fetchCooccurrence();
+                renderCooccurrenceNetwork(cooccurrenceData);
+            } catch (err) {
+                document.getElementById('cooccurrence-svg').outerHTML =
+                    `<div class="text-xs text-red-500">Failed to load co-occurrence network: ${err.message}</div>`;
+            }
+ 
+            switchTab(0);
+ 
+            let searchTimer = null;
+            document.getElementById('mutation-search').addEventListener('input', function(e) {
+                clearTimeout(searchTimer);
+                const q = e.target.value;
+                searchTimer = setTimeout(async () => {
+                    try {
+                        const results = await fetchMutations(q);
+                        renderMutationTable(results);
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }, 250);
+            });
+ 
+            document.getElementById('file-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => { document.getElementById('gene-sequence').value = reader.result; };
+                reader.onerror = () => alert('Could not read file.');
+                reader.readAsText(file);
+            });
+ 
+            document.getElementById('chat-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+ 
+            setTimeout(() => {
+                addChatMessage('assistant', 'Hello! I am your Bio-AI clinical assistant. How can I help you interpret this patient’s resistance profile today?');
+            }, 1000);
+        }
+ 
+        window.onload = initializeApp;
+    </script>
+</body>
+</html>
