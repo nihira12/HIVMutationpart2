@@ -1,6 +1,5 @@
 import os
 import sys
-from threading import Timer
 
 import pandas as pd
 from flask import Flask, jsonify, request
@@ -13,9 +12,19 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 # -------------------------------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CSV_PATH = os.path.join(BASE_DIR, 'mutations.csv')
-COOCCURRENCE_CSV_PATH = os.path.join(BASE_DIR, 'cooccurrence.csv')
-INTERACTIONS_CSV_PATH = os.path.join(BASE_DIR, 'interactions.csv')
+
+
+def resolve_csv_path(*candidates):
+    for name in candidates:
+        path = os.path.join(BASE_DIR, name)
+        if os.path.exists(path):
+            return path
+    raise FileNotFoundError(f"Could not find any of: {', '.join(candidates)}")
+
+
+CSV_PATH = resolve_csv_path('mutations.csv')
+COOCCURRENCE_CSV_PATH = resolve_csv_path('cooccurrence.csv')
+INTERACTIONS_CSV_PATH = resolve_csv_path('Interactions.csv', 'interactions.csv')
 
 
 def load_mutation_database():
@@ -119,6 +128,17 @@ def analyze():
     })
 
 
+@app.route('/api/stats', methods=['GET'])
+def get_stats():
+    """Return lightweight counts used by the landing page."""
+    return jsonify({
+        'records': int(len(mutation_database)),
+        'genes': int(mutation_database['Gene'].dropna().nunique()),
+        'cooccurrences': int(len(cooccurrence_database)),
+        'interactions': int(len(interaction_database)),
+    })
+
+
 @app.route('/api/cooccurrence', methods=['GET'])
 def get_cooccurrence():
     """
@@ -219,8 +239,8 @@ if __name__ == '__main__':
     print("=" * 50)
 
     app.run(
-        host='127.0.0.1',
-        port=5000,
-        debug=True,
+        host='0.0.0.0',
+        port=int(os.environ.get('PORT', 5000)),
+        debug=False,
         use_reloader=False
     )

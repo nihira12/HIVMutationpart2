@@ -1,421 +1,102 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HIV Resistance Intelligence | AI Clinical Platform</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-    <style>
-        :root {
-            /* Palette Defaults: Emerald Theme */
-            --primary: #34d399;
-            --secondary: #38bdf8;
-            --purple: #8b5cf6;
-            --brand-glow: rgba(52, 211, 153, 0.35);
-
-            /* Theme Base: Dark (Default) */
-            --bg: #07111f;
-            --bg2: #091a2d;
-            --glass: rgba(255, 255, 255, 0.06);
-            --border: rgba(255, 255, 255, 0.12);
-            --text: #ffffff;
-            --muted: #b6c4d8;
-            --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            --btn-text: #04150f;
-        }
-
-        [data-theme="light"] {
-            /* Theme Override: Light */
-            --bg: #f8fafc;
-            --bg2: #e2e8f0;
-            --glass: rgba(255, 255, 255, 0.75);
-            --border: rgba(0, 0, 0, 0.08);
-            --text: #0f172a;
-            --muted: #475569;
-            --shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
-            --btn-text: #ffffff;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        h1, h2, h3, .logo, .btn-primary span {
-            font-family: 'Space Grotesk', sans-serif;
-            letter-spacing: -0.01em;
-        }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-            background:
-                radial-gradient(circle at 10% 10%, var(--brand-glow), transparent 35%),
-                radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.15), transparent 40%),
-                radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.12), transparent 40%),
-                linear-gradient(135deg, var(--bg), var(--bg2));
-            color: var(--text);
-            min-height: 100vh;
-            position: relative;
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-
-        /* Floating Glow Spheres */
-        body::before,
-        body::after {
-            content: "";
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            z-index: 0;
-            pointer-events: none;
-        }
-        body::before {
-            width: 500px; height: 500px;
-            background: var(--brand-glow);
-            left: -120px; top: -120px;
-            animation: float1 18s infinite alternate;
-        }
-        body::after {
-            width: 450px; height: 450px;
-            background: rgba(56, 189, 248, 0.2);
-            right: -100px; bottom: -100px;
-            animation: float2 20s infinite alternate;
-        }
-        @keyframes float1 { 0% { transform: translate(0, 0); } 100% { transform: translate(150px, 90px); } }
-        @keyframes float2 { 0% { transform: translate(0, 0); } 100% { transform: translate(-120px, -80px); } }
-
-        /* ---------- Nav Header ---------- */
-        nav {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 24px 6vw;
-        }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: var(--text);
-        }
-        .logo-dot {
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            box-shadow: 0 0 16px var(--brand-glow);
-        }
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 28px;
-        }
-        .nav-links { display: flex; gap: 28px; }
-        .nav-link {
-            color: var(--muted);
-            text-decoration: none;
-            font-size: .95rem;
-            font-weight: 500;
-            transition: .2s;
-        }
-        .nav-link:hover { color: var(--text); }
-
-        /* Color & Theme Toolbar */
-        .controls-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 6px 12px;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            backdrop-filter: blur(12px);
-        }
-        .color-dot {
-            width: 16px; height: 16px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-        .color-dot:hover { transform: scale(1.2); }
-        .theme-toggle-btn {
-            background: transparent;
-            border: none;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s;
-        }
-        .theme-toggle-btn:hover { color: var(--primary); }
-
-        /* ---------- Hero Section ---------- */
-        .hero {
-            position: relative;
-            z-index: 2;
-            max-width: 900px;
-            margin: 6vh auto 8vh;
-            padding: 0 6vw;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 18px;
-            border-radius: 999px;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            font-size: .85rem;
-            color: var(--muted);
-            margin-bottom: 28px;
-            backdrop-filter: blur(12px);
-        }
-        .hero-title {
-            font-size: clamp(2.2rem, 5vw, 3.6rem);
-            font-weight: 800;
-            line-height: 1.15;
-            letter-spacing: -0.02em;
-            margin-bottom: 24px;
-            color: var(--text);
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary), var(--secondary) 60%, var(--purple));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-subtitle {
-            color: var(--muted);
-            font-size: 1.05rem;
-            line-height: 1.7;
-            max-width: 640px;
-            margin-bottom: 36px;
-        }
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 16px 32px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: var(--btn-text);
-            font-weight: 700;
-            font-size: 1rem;
-            text-decoration: none;
-            box-shadow: 0 12px 30px var(--brand-glow);
-            transition: .3s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 16px 36px var(--brand-glow);
-        }
-
-        /* ---------- Features Section ---------- */
-        .features {
-            position: relative;
-            z-index: 2;
-            max-width: 1100px;
-            margin: 0 auto 10vh;
-            padding: 0 6vw;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px;
-        }
-        .card {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(22px);
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            padding: 32px 28px;
-            transition: .35s ease;
-        }
-        .card:hover {
-            transform: translateY(-6px);
-            border-color: var(--primary);
-        }
-        .card-icon {
-            font-size: 2rem;
-            margin-bottom: 16px;
-        }
-        .card h3 {
-            font-size: 1.15rem;
-            margin-bottom: 12px;
-            color: var(--text);
-        }
-        .card p {
-            color: var(--muted);
-            font-size: .92rem;
-            line-height: 1.6;
-        }
-
-        /* ---------- Footer ---------- */
-        footer {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            padding: 32px 6vw 48px;
-            color: var(--muted);
-            font-size: .85rem;
-            border-top: 1px solid var(--border);
-        }
-
-        @media (max-width: 640px) {
-            .nav-links { display: none; }
-        }
-    </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIV Resistance Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#050914;--panel:#0c1424cc;--card:#111c30cc;--text:#f5f8ff;--muted:#94a3b8;--line:#23324a;--a:#35e0a1;--b:#4bb8ff;--c:#9b78ff}
+[data-theme=light]{--bg:#f4f8fc;--panel:#ffffffdd;--card:#fff;--text:#0e1b2c;--muted:#5d6b7e;--line:#d9e4ef}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#103a3b80,transparent 35%),radial-gradient(circle at 85% 10%,#18385d80,transparent 35%),var(--bg);color:var(--text);font-family:Inter,sans-serif}
+a{color:inherit;text-decoration:none}.wrap{width:min(1180px,92%);margin:auto}.nav{height:78px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:5}.brand{display:flex;gap:12px;align-items:center;font-weight:800}.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--a),var(--b));display:grid;place-items:center;color:#06111a;font-size:22px}.links{display:flex;gap:24px;color:var(--muted);font-size:14px}.tools{display:flex;gap:10px}.iconbtn,.ghost,.primary{border:1px solid var(--line);border-radius:12px;padding:11px 15px;background:var(--panel);color:var(--text);cursor:pointer}.primary{background:linear-gradient(135deg,var(--a),var(--b));border:0;color:#05131b;font-weight:800}.hero{min-height:650px;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:40px}.badge{display:inline-flex;gap:8px;align-items:center;border:1px solid #35e0a155;background:#35e0a111;padding:8px 12px;border-radius:99px;color:var(--a);font:600 12px JetBrains Mono}.hero h1{font-size:clamp(44px,6vw,76px);line-height:1.02;letter-spacing:-.055em;margin:22px 0}.gradient{background:linear-gradient(90deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;color:transparent}.lead{font-size:18px;line-height:1.75;color:var(--muted);max-width:700px}.actions{display:flex;gap:12px;margin-top:30px}.science-card{position:relative;min-height:520px;border:1px solid var(--line);border-radius:32px;background:linear-gradient(145deg,var(--panel),transparent);overflow:hidden;box-shadow:0 40px 90px #0006}.virion{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:310px;height:310px;border-radius:50%;border:2px solid #35e0a155;background:radial-gradient(circle,#35e0a118 0 45%,transparent 46%),repeating-radial-gradient(circle,#4bb8ff22 0 2px,transparent 3px 20px);box-shadow:0 0 90px #35e0a133}.virion:before{content:"HIV-1";position:absolute;inset:0;display:grid;place-items:center;font:800 34px JetBrains Mono;color:var(--a)}.spike{position:absolute;left:50%;top:50%;width:390px;height:390px;transform:translate(-50%,-50%);border-radius:50%;border:1px dashed #4bb8ff66;animation:spin 30s linear infinite}.spike:after{content:"ENV • POL • GAG • IN • PR • RT • CA";position:absolute;left:50%;top:-17px;transform:translateX(-50%);white-space:nowrap;color:var(--b);font:600 11px JetBrains Mono}@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}.mini{position:absolute;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:14px;font-size:12px}.m1{left:22px;top:35px}.m2{right:22px;top:95px}.m3{left:30px;bottom:38px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:10px 0 90px}.stat,.card{padding:24px;border:1px solid var(--line);background:var(--card);border-radius:20px}.stat b{font-size:32px}.stat small,.card p{color:var(--muted);line-height:1.65}.section{padding:80px 0}.section h2{font-size:40px;letter-spacing:-.04em;margin:0 0 12px}.eyebrow{font:700 12px JetBrains Mono;color:var(--a);letter-spacing:.12em}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}.card i{font-style:normal;font-size:28px}.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:35px}.step{padding:26px;border-top:2px solid var(--line)}.step span{font:700 12px JetBrains Mono;color:var(--a)}.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.source{display:flex;gap:16px;align-items:flex-start}.source .dot{width:12px;height:12px;margin-top:6px;border-radius:50%;background:var(--a);box-shadow:0 0 18px var(--a)}.cta{margin:70px auto;padding:55px;border-radius:30px;border:1px solid var(--line);background:linear-gradient(135deg,#10352f,#102444);text-align:center}.footer{padding:35px 0;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media(max-width:850px){.hero{grid-template-columns:1fr}.science-card{min-height:420px}.links{display:none}.stats,.grid3,.workflow,.source-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.stats,.grid3,.workflow,.source-grid{grid-template-columns:1fr}.hero h1{font-size:44px}.science-card{display:none}}
+</style>
 </head>
 <body>
+<div class="wrap nav">
+ <div class="brand"><div class="logo">⌬</div><div>HIV Resistance<br><small style="color:var(--muted);font-weight:500">Intelligence Laboratory</small></div></div>
+ <div class="links"><a href="#platform">Platform</a><a href="#science">Science</a><a href="#sources">Sources</a><a href="#workflow">Workflow</a></div>
+ <div class="tools"><button class="iconbtn" onclick="toggleTheme()">◐</button><a class="primary" href="/app">Open workspace →</a></div>
+</div>
 
-    <nav>
-        <div class="logo">
-            <div class="logo-dot"></div>
-            HIV Resistance Intelligence
-        </div>
-        
-        <div class="nav-right">
-            <div class="nav-links">
-                <a href="#features" class="nav-link">Features</a>
-                <a href="/app" class="nav-link">Launch App</a>
-            </div>
+<main class="wrap">
+<section class="hero">
+ <div>
+  <div class="badge">● RESEARCH PROTOTYPE • HIV-1 DRUG RESISTANCE</div>
+  <h1>Explore the <span class="gradient">genetic architecture</span> of HIV drug resistance.</h1>
+  <p class="lead">A visual research workspace for mutation lookup, resistance-pattern analysis, treatment-class exploration, co-occurrence networks, drug interaction review and evidence discovery.</p>
+  <div class="actions"><a class="primary" href="/app">Launch analysis workspace</a><a class="ghost" href="#science">Explore the science</a></div>
+ </div>
+ <div class="science-card">
+  <div class="mini m1"><b>Reverse transcriptase</b><br><span style="color:var(--muted)">NRTI · NNRTI pathways</span></div>
+  <div class="mini m2"><b>Integrase</b><br><span style="color:var(--muted)">INSTI escape patterns</span></div>
+  <div class="mini m3"><b>Protease + Capsid</b><br><span style="color:var(--muted)">PI · CAI resistance</span></div>
+  <div class="spike"></div><div class="virion"></div>
+ </div>
+</section>
 
-            <div class="controls-wrapper">
-                <button class="color-dot" style="background:#34d399;" onclick="setLandingAccent('emerald')" title="Emerald"></button>
-                <button class="color-dot" style="background:#38bdf8;" onclick="setLandingAccent('cyan')" title="Cyan"></button>
-                <button class="color-dot" style="background:#8b5cf6;" onclick="setLandingAccent('violet')" title="Violet"></button>
-                <button class="color-dot" style="background:#f43f5e;" onclick="setLandingAccent('rose')" title="Rose"></button>
-                <button class="color-dot" style="background:#f59e0b;" onclick="setLandingAccent('amber')" title="Amber"></button>
-                
-                <button class="theme-toggle-btn" onclick="toggleLandingTheme()" title="Toggle Theme">
-                    <i id="theme-icon" class="fa-solid fa-moon"></i>
-                </button>
-            </div>
-        </div>
-    </nav>
+<section class="stats" id="live-stats">
+ <div class="stat"><b id="s-records">—</b><br><small>curated mutation–drug records</small></div>
+ <div class="stat"><b id="s-genes">—</b><br><small>genomic targets represented</small></div>
+ <div class="stat"><b id="s-patterns">—</b><br><small>co-occurrence relationships</small></div>
+ <div class="stat"><b id="s-interactions">—</b><br><small>interaction reference records</small></div>
+</section>
 
-    <main class="hero">
-        <div class="badge">
-            <span>🧬 AI-Powered Clinical Decision Support</span>
-        </div>
+<section class="section" id="platform">
+ <div class="eyebrow">FULL WORKSPACE</div><h2>Every page is designed to answer a different research question.</h2>
+ <div class="grid3">
+  <div class="card"><i>⌁</i><h3>Analysis dashboard</h3><p>Enter mutation codes, review risk summaries, inspect resistance by class and visualize mutation positions.</p></div>
+  <div class="card"><i>◫</i><h3>Therapy explorer</h3><p>Organize affected drugs into avoid, caution and potentially active categories with transparent evidence notes.</p></div>
+  <div class="card"><i>◎</i><h3>Analytics center</h3><p>Explore dataset composition with class, gene, severity, resistance and codon-hotspot charts.</p></div>
+  <div class="card"><i>⌘</i><h3>Mutation atlas</h3><p>Search and filter records, open detailed mutation cards and compare targets across drug classes.</p></div>
+  <div class="card"><i>⌬</i><h3>Network laboratory</h3><p>Study co-occurring mutations and clinically relevant escape pathways using an interactive network.</p></div>
+  <div class="card"><i>▤</i><h3>Evidence & information</h3><p>Understand scope, limitations, data provenance, terminology and the path toward a validated ML system.</p></div>
+ </div>
+</section>
 
-        <h1 class="hero-title">
-            AI-Powered HIV Drug Resistance Intelligence <br>
-            <span class="gradient-text">with complete control</span>
-        </h1>
+<section class="section" id="science">
+ <div class="eyebrow">HIV BIOLOGY</div><h2>Resistance emerges across multiple molecular targets.</h2>
+ <div class="grid3">
+  <div class="card"><h3>Reverse transcriptase</h3><p>NRTI and NNRTI mutations alter nucleotide incorporation or inhibitor binding, often creating recognizable pathways such as M184V, K65R, TAMs and NNRTI pocket substitutions.</p></div>
+  <div class="card"><h3>Protease</h3><p>Major and accessory substitutions reshape the protease active site and compensate for fitness costs, making mutation patterns more informative than isolated substitutions.</p></div>
+  <div class="card"><h3>Integrase and capsid</h3><p>INSTI resistance often follows Q148, N155, Y143 or related pathways. Capsid inhibitor resistance adds a newer target represented in the workspace.</p></div>
+ </div>
+</section>
 
-        <p class="hero-subtitle">
-            Analyze HIV genomic sequences, identify resistance mutations,
-            predict treatment effectiveness, explore mutation databases,
-            and generate evidence-based clinical recommendations using AI.
-        </p>
+<section class="section" id="workflow">
+ <div class="eyebrow">WORKFLOW</div><h2>From mutation list to interpretable research output.</h2>
+ <div class="workflow">
+  <div class="step"><span>01 INPUT</span><h3>Provide mutation codes</h3><p>Paste codes such as M184V K103N Q148H or upload a text/CSV file.</p></div>
+  <div class="step"><span>02 MATCH</span><h3>Link curated records</h3><p>The backend maps recognized codes to gene, drug, class, evidence and resistance fields.</p></div>
+  <div class="step"><span>03 PATTERN</span><h3>Detect pathways</h3><p>Co-occurrence relationships add context for multi-mutation resistance patterns.</p></div>
+  <div class="step"><span>04 INTERPRET</span><h3>Review and export</h3><p>Explore charts, therapy summaries, evidence and a printable report.</p></div>
+ </div>
+</section>
 
-        <a href="/app" class="btn-primary">
-            <span>Launch Workspace</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-        </a>
-    </main>
+<section class="section" id="sources">
+ <div class="eyebrow">AUTHORITATIVE ECOSYSTEM</div><h2>Designed around the capabilities of leading HIV resources.</h2>
+ <div class="source-grid">
+  <div class="card source"><div class="dot"></div><div><h3>Stanford HIVDB</h3><p>Genotype interpretation, mutation summaries and genotype–phenotype research datasets.</p></div></div>
+  <div class="card source"><div class="dot"></div><div><h3>IAS–USA</h3><p>Clinically focused drug resistance mutation charts with accompanying expert notes.</p></div></div>
+  <div class="card source"><div class="dot"></div><div><h3>Los Alamos HIV Database</h3><p>Sequence search, alignments, genomic visualization and HIV research tools.</p></div></div>
+  <div class="card source"><div class="dot"></div><div><h3>WHO HIV Drug Resistance</h3><p>Population-level surveillance strategy, reports and public-health framing.</p></div></div>
+ </div>
+</section>
 
-    <section class="features" id="features">
-        <div class="card">
-            <div class="card-icon">⚡</div>
-            <h3>Mutation Detection</h3>
-            <p>Upload HIV FASTA or CSV files and automatically identify
-            known resistance mutations across Reverse Transcriptase,
-            Protease, and Integrase genes.</p>
-        </div>
-        <div class="card">
-            <div class="card-icon">👁️</div>
-            <h3>Clinical AI Assistant</h3>
-            <p>Ask questions about drug resistance, treatment strategies,
-            mutation interactions, and receive evidence-based explanations
-            powered by AI.</p>
-        </div>
-        <div class="card">
-            <div class="card-icon">🛡️</div>
-            <h3>Global Resistance Database</h3>
-            <p>Search curated HIV mutations from international resistance
-            databases with drug susceptibility scores and clinical evidence.</p>
-        </div>
-        <div class="card">
-            <div class="card-icon">🔗</div>
-            <h3>Regimen Interaction Checker</h3>
-            <p>Select a multi-drug regimen and flag known pharmacologic
-            conflicts, with mechanism and management guidance for each.</p>
-        </div>
-        <div class="card">
-            <div class="card-icon">🕸️</div>
-            <h3>Mutation Co-occurrence Map</h3>
-            <p>Explore how resistance mutations cluster into known escape
-            pathways, from TAM clusters to INSTI compensatory pairs.</p>
-        </div>
-    </section>
-
-    <footer>
-        &copy; 2026 AI Application Platform. Built for developers.
-    </footer>
-
-    <script>
-        const accents = {
-            emerald: { primary: '#34d399', secondary: '#38bdf8', glow: 'rgba(52, 211, 153, 0.35)', btnText: '#04150f' },
-            cyan:    { primary: '#38bdf8', secondary: '#8b5cf6', glow: 'rgba(56, 189, 248, 0.35)', btnText: '#031726' },
-            violet:  { primary: '#a78bfa', secondary: '#f43f5e', glow: 'rgba(167, 139, 250, 0.35)', btnText: '#12072b' },
-            rose:    { primary: '#fb7185', secondary: '#f59e0b', glow: 'rgba(251, 113, 133, 0.35)', btnText: '#28040b' },
-            amber:   { primary: '#fbbf24', secondary: '#f43f5e', glow: 'rgba(251, 191, 36, 0.35)', btnText: '#261a02' }
-        };
-
-        function setLandingAccent(key) {
-            const config = accents[key] || accents.emerald;
-            const root = document.documentElement;
-            root.style.setProperty('--primary', config.primary);
-            root.style.setProperty('--secondary', config.secondary);
-            root.style.setProperty('--brand-glow', config.glow);
-            root.style.setProperty('--btn-text', config.btnText);
-            localStorage.setItem('bioai_accent', key);
-        }
-
-        function toggleLandingTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme') || 'dark';
-            const next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-
-            const icon = document.getElementById('theme-icon');
-            if (icon) {
-                icon.className = next === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-            }
-            localStorage.setItem('bioai_theme', next);
-        }
-
-        (function init() {
-            const savedTheme = localStorage.getItem('bioai_theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            const icon = document.getElementById('theme-icon');
-            if (icon) {
-                icon.className = savedTheme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-            }
-
-            const savedAccent = localStorage.getItem('bioai_accent') || 'emerald';
-            setLandingAccent(savedAccent);
-        })();
-    </script>
-</body>
-</html>
+<section class="cta"><div class="eyebrow">START EXPLORING</div><h2>Open the complete HIV resistance workspace.</h2><p style="color:#bed0dc">Research and educational use only. This prototype is not a medical device or validated clinical interpretation system.</p><br><a class="primary" href="/app">Launch workspace →</a></section>
+</main>
+<footer class="footer"><div class="wrap">HIV Resistance Intelligence • Educational research prototype • Always verify interpretation with validated clinical resources.</div></footer>
+<script>
+function toggleTheme(){const h=document.documentElement;h.dataset.theme=h.dataset.theme==='light'?'dark':'light';localStorage.setItem('landingTheme',h.dataset.theme)}
+document.documentElement.dataset.theme=localStorage.getItem('landingTheme')||'dark';
+fetch('/api/stats').then(r=>r.json()).then(s=>{
+ document.getElementById('s-records').textContent=s.records;
+ document.getElementById('s-genes').textContent=s.genes;
+ document.getElementById('s-patterns').textContent=s.cooccurrences;
+ document.getElementById('s-interactions').textContent=s.interactions;
+}).catch(()=>{});
+</script>
+</body></html>
